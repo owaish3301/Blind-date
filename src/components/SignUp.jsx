@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
-import bcrypt from 'bcryptjs';
+import { encryptPassword } from '../utils/encryption';
 
 function SignUp() {
   const [formData, setFormData] = useState({
@@ -41,25 +41,18 @@ function SignUp() {
     }
 
     try {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(formData.password, salt);
+      const encryptedPassword = encryptPassword(formData.password);
       
       const response = await axios.post('/auth/signup', {
         name: formData.name,
         email: formData.email,
-        password: hashedPassword
+        password: encryptedPassword
       });
 
-      setFormData({ name: '', email: '', password: '' });
       localStorage.setItem('token', response.data.token);
       navigate('/home');
     } catch (error) {
-      if (error.response?.status === 400) {
-        setSubmitError('Email already exists');
-      } else {
-        setSubmitError('An error occurred. Please try again.');
-      }
-      console.error('Signup error:', error.message);
+      setSubmitError(error.response?.data?.message || 'Signup failed');
     }
   };
 

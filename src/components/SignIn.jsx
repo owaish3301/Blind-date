@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
-import bcrypt from 'bcryptjs';
+import { encryptPassword } from '../utils/encryption';
+
 
 function SignIn() {
   const [formData, setFormData] = useState({
@@ -33,18 +34,11 @@ function SignIn() {
     }
 
     try {
-      // Hash password client-side before sending
-      const hashedPassword = await bcrypt.hash(formData.password, 10);
+      const encryptedPassword = encryptPassword(formData.password);
       
-      // Send only hashed data
       const response = await axios.post('/auth/signin', {
         email: formData.email,
-        password: hashedPassword
-      }, {
-        headers: {
-          'Content-Security-Policy': "default-src 'self'",
-          'X-Content-Type-Options': 'nosniff'
-        }
+        password: encryptedPassword
       });
 
       // Clear sensitive data immediately
@@ -63,7 +57,7 @@ function SignIn() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href =`${ import.meta.env.VITE_API_URL}/auth/google`;
   };
 
   return (
