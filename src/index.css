@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes beat {
+    to {
+        transform: scale(1.1);
+    }
+}
+
+.neubrutalism {
+    @apply border-4 border-black shadow-[6px_6px_0_0_#000] transition-all duration-200;
+}
+
+.neubrutalism:hover {
+    @apply -translate-x-1 -translate-y-1 shadow-[10px_10px_0_0_#000];
+}
+
+.heart-container {
+  @apply relative inline-block;
+}
+
+.heart {
+  @apply animate-heartbeat text-pink-500 transition-all duration-300;
+  filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.3));
+}
+
+.heart:hover {
+  @apply text-red-600;
+  filter: drop-shadow(0 0 4px rgba(255, 0, 0, 0.5));
+}

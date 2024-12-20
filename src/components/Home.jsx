@@ -33,6 +33,9 @@ function Home() {
         headers: { 'x-auth-token': token }
       });
       setUserData(response.data);
+      if (!response.data.questionnaire?.questionnaireCompleted) {
+        navigate('/questionnaire');
+      }
       setIsLoading(false);
     } catch (error) {
       console.error('Token verification failed:', error);

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SignUp from './components/SignUp';
 import SignIn from './components/SignIn';
 import Home from './components/Home';
+import QuestionnaireForm from './components/questionnaireForm';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import { Analytics } from "@vercel/analytics/react"
@@ -23,6 +24,14 @@ function App() {
             <SignIn />
           </PublicRoute>
         } />
+        <Route 
+          path="/questionnaire" 
+          element={
+            <ProtectedRoute>
+              <QuestionnaireForm />
+            </ProtectedRoute>
+          } 
+        />
         <Route 
           path="/home" 
           element={
