@@ -18,7 +18,8 @@ function ScratchCard({ id, isLocked, code: initialCode, isScratched: initialIsSc
   useEffect(() => {
     if (isExpanded && canvasRef.current && !localIsScratched) {
       const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
+      // Add willReadFrequently option for better performance
+      const context = canvas.getContext('2d', { willReadFrequently: true });
       contextRef.current = context;
 
       // Set canvas size after DOM is updated
@@ -52,50 +53,121 @@ function ScratchCard({ id, isLocked, code: initialCode, isScratched: initialIsSc
       const result = await onScratch(id);
       if (result?.code) {
         setRevealedCode(result.code);
-        setLocalIsScratched(true);
-        setLocalCode(result.code);
         
-        // Update canvas to show revealed code
+        // Animate the reveal
         if (canvasRef.current && contextRef.current) {
           const canvas = canvasRef.current;
           const context = contextRef.current;
           
-          // Clear canvas
-          context.globalCompositeOperation = 'source-over';
-          context.clearRect(0, 0, canvas.width, canvas.height);
+          // Animation duration in milliseconds
+          const duration = 3000; // 3 seconds
+          const startTime = Date.now();
           
-          // Draw white background
-          context.fillStyle = 'white';
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          
-          // Draw revealed code
-          context.font = 'bold 48px Arial';
-          context.fillStyle = '#000';
-          context.textAlign = 'center';
-          context.textBaseline = 'middle';
-          context.fillText(result.code, canvas.width / 2, canvas.height / 2);
+          const fadeOut = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Ease out function for smoother animation
+            const opacity = 1 - (progress * progress);
+            
+            // Clear canvas
+            context.globalCompositeOperation = 'source-over';
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw gradient with reducing opacity
+            const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, `rgba(252, 231, 243, ${opacity})`);
+            gradient.addColorStop(1, `rgba(251, 207, 232, ${opacity})`);
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw hearts with reducing opacity
+            context.font = '20px Arial';
+            context.fillStyle = `rgba(249, 168, 212, ${opacity})`;
+            for (let i = 0; i < canvas.width; i += 40) {
+              for (let j = 0; j < canvas.height; j += 40) {
+                context.fillText('❤️', i, j);
+              }
+            }
+
+            // Draw the revealed code with increasing opacity
+            context.font = 'bold 48px Arial';
+            context.fillStyle = `rgba(0, 0, 0, ${progress})`;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(result.code, canvas.width / 2, canvas.height / 2);
+
+            if (progress < 1) {
+              requestAnimationFrame(fadeOut);
+            } else {
+              // Animation complete
+              setLocalIsScratched(true);
+              setLocalCode(result.code);
+            }
+          };
+
+          fadeOut();
         }
       }
     } catch (error) {
       console.error('Failed to scratch card:', error);
     } finally {
-      setIsScratchInProgress(false);
+      setTimeout(() => {
+        setIsScratchInProgress(false);
+      }, 3000); // Match animation duration
     }
   };
 
   const renderExpandedCard = () => (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all-slow ${
+        isExpanded ? 'opacity-100 visible' : 'opacity-0 invisible'
+      }`}
+      style={{
+        background: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(4px)'
+      }}
       onClick={() => setIsExpanded(false)}
     >
       <div
-        className="relative w-full max-w-lg aspect-[3/4] bg-white border-4 border-black rounded-lg shadow-[6px_6px_0_0_#000]"
+        className={`relative w-full max-w-lg aspect-[3/4] bg-white border-4 border-black rounded-lg transition-all-slow ${
+          isExpanded ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        }`}
+        style={{ 
+          boxShadow: '6px 6px 0 0 #000',
+          transform: `scale(${isExpanded ? '1' : '0.95'}) translateY(${isExpanded ? '0' : '10px'})`,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {(localIsScratched || revealedCode) ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-            <div className="text-4xl font-bold mb-4">{revealedCode || localCode}</div>
-            <p className="text-sm text-gray-500">Click outside to close</p>
+          <div 
+            className="absolute inset-0 flex flex-col items-center justify-center p-4 transition-all-slow"
+            style={{
+              opacity: isExpanded ? 1 : 0,
+              transform: `translateY(${isExpanded ? '0' : '20px'})`,
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s'
+            }}
+          >
+            <div 
+              className="text-4xl font-bold mb-4"
+              style={{
+                opacity: isExpanded ? 1 : 0,
+                transform: `scale(${isExpanded ? '1' : '0.9'})`,
+                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.3s'
+              }}
+            >
+              {revealedCode || localCode}
+            </div>
+            <p 
+              className="text-sm text-gray-500"
+              style={{
+                opacity: isExpanded ? 1 : 0,
+                transform: `translateY(${isExpanded ? '0' : '10px'})`,
+                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.4s'
+              }}
+            >
+              Click outside to close
+            </p>
           </div>
         ) : (
           <canvas
@@ -113,7 +185,10 @@ function ScratchCard({ id, isLocked, code: initialCode, isScratched: initialIsSc
               handleScratch(e);
             }}
             onTouchEnd={() => isDrawing.current = false}
-            className="absolute inset-0 w-full h-full cursor-pointer rounded-lg touch-none"
+            className="absolute inset-0 w-full h-full cursor-pointer rounded-lg touch-none transition-opacity-slow"
+            style={{
+              opacity: isExpanded ? 1 : 0
+            }}
           />
         )}
       </div>
