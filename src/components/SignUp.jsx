@@ -112,7 +112,7 @@ function SignUp() {
               type="password"
               placeholder="Password"
               className={`w-full p-3 border-2 border-black rounded bg-pink-50 ${errors.password ? 'border-red-500' : ''}`}
-              autocomplete="off"
+              autoComplete="off"
               onChange={(e) => {
                 setFormData({...formData, password: e.target.value});
                 setErrors({...errors, password: ''});
