@@ -1,8 +1,7 @@
-import './App.css'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SignUp from './components/SignUp';
 import SignIn from './components/SignIn';
-import Home from './components/Home';
+import Home from './components/home/index'; // Update this import
 import QuestionnaireForm from './components/questionnaireForm';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
