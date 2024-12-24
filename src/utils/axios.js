@@ -5,22 +5,8 @@ const instance = axios.create({
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
-  },
-  xsrfCookieName: "XSRF-TOKEN",
-  xsrfHeaderName: "X-XSRF-TOKEN",
-});
-
-// Add response interceptor to handle OAuth redirects
-instance.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/signin';
-    }
-    return Promise.reject(error);
   }
-);
+});
 
 instance.interceptors.request.use(
   (config) => {
@@ -34,6 +20,5 @@ instance.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
 
 export default instance;
