@@ -16,6 +16,18 @@ export function SocketProvider({ children }) {
       autoConnect: true
     });
 
+    newSocket.on('connect', () => {
+      console.log('Socket connected:', newSocket.id);
+    });
+
+    newSocket.on('error', (error) => {
+      console.error('Socket error:', error);
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('Socket disconnected');
+    });
+
     setSocket(newSocket);
 
     return () => {
