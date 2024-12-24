@@ -7,17 +7,17 @@ export function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://blind-date-backend.vercel.app'
-      : 'http://localhost:5000';
+    const baseUrl = 'wss://blind-date-backend.vercel.app';
 
     const newSocket = io(baseUrl, {
       withCredentials: true,
-      transports: ['websocket', 'polling'],
-      path: '/socket.io/',
+      transports: ['polling', 'websocket'],
+      path: '/socket.io',
+      secure: true,
+      rejectUnauthorized: false,
+      reconnection: true,
       reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      autoConnect: true
+      reconnectionDelay: 1000
     });
 
     setSocket(newSocket);
