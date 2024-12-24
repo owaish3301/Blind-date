@@ -7,25 +7,17 @@ export function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    // Remove /api from the URL - connect to root
-    const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '');
-    
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://blind-date-backend.vercel.app'
+      : 'http://localhost:5000';
+
     const newSocket = io(baseUrl, {
       withCredentials: true,
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
+      path: '/socket.io/',
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
       autoConnect: true
-    });
-
-    newSocket.on('connect', () => {
-      console.log('Socket connected:', newSocket.id);
-    });
-
-    newSocket.on('error', (error) => {
-      console.error('Socket error:', error);
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
     });
 
     setSocket(newSocket);
@@ -44,6 +36,4 @@ export function SocketProvider({ children }) {
   );
 }
 
-export const useSocket = () => {
-  return useContext(SocketContext);
-};
+export const useSocket = () => useContext(SocketContext);
