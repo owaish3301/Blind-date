@@ -39,36 +39,32 @@ function CardGrid() {
     try {
       const response = await axios.post(`/cards/scratch/${cardId}`);
       
-      // Handle match
-      if (response.data.matched && response.data.matchedUser) {
-        console.log('🎉 Match found!');
-        console.log('Matched with:', {
-          name: response.data.matchedUser.name,
-          age: response.data.matchedUser.age,
-          course: response.data.matchedUser.course,
-          year: response.data.matchedUser.year,
-          interests: response.data.matchedUser.interests
-        });
-      }
-
-      // Update cards state
+      // Update cards state with revealed code
       setCards(prevCards => 
         prevCards.map(card => 
           card._id === cardId 
             ? { 
                 ...card, 
-                isScratched: true, 
+                isScratched: true,
                 code: response.data.code,
-                isLocked: false,
-                canScratch: false
+                scratchedAt: new Date()
               }
             : card
         )
       );
 
+      // Handle match if any
+      if (response.data.matched && response.data.matchedUser) {
+        console.log('🎉 Match found!', response.data.matchedUser);
+      }
+
       return response.data;
     } catch (err) {
-      console.error('Error scratching card:', err);
+      if (err.response?.status === 400 && err.response.data?.code) {
+        // If card was already scratched, return existing code
+        return { code: err.response.data.code };
+      }
+      console.error('Scratch error:', err.response?.data?.message || 'Failed to scratch card');
       throw err;
     }
   };
@@ -86,6 +82,7 @@ function CardGrid() {
           isLocked={card.isLocked}
           canScratch={card.canScratch} // Make sure this is being passed
           isScratched={card.isScratched}
+          scratchedAt={card.scratchedAt}
           onScratch={handleScratch}
           userGender={userData?.questionnaire?.gender}
         />

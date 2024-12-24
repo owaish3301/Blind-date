@@ -1,114 +1,203 @@
 import { useState, useRef, useEffect } from 'react';
 
-function ScratchCard({ id, isLocked, code, onScratch }) {
-  const [isScratched, setIsScratched] = useState(!!code);
-  const [isScratching, setIsScratching] = useState(false);
+function ScratchCard({ id, isLocked, code: initialCode, isScratched: initialIsScratched, scratchedAt, onScratch }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [localIsScratched, setLocalIsScratched] = useState(initialIsScratched);
+  const [localCode, setLocalCode] = useState(initialCode);
+  const [isScratchInProgress, setIsScratchInProgress] = useState(false);
+  const [revealedCode, setRevealedCode] = useState(null);
   const canvasRef = useRef(null);
   const contextRef = useRef(null);
+  const isDrawing = useRef(false);
 
   useEffect(() => {
+    setLocalIsScratched(initialIsScratched);
+    setLocalCode(initialCode);
+  }, [initialIsScratched, initialCode]);
+
+  useEffect(() => {
+    if (isExpanded && canvasRef.current && !localIsScratched) {
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      contextRef.current = context;
+
+      // Set canvas size after DOM is updated
+      requestAnimationFrame(() => {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#fce7f3');
+        gradient.addColorStop(1, '#fbcfe8');
+        
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.font = '20px Arial';
+        context.fillStyle = '#f9a8d4';
+        for (let i = 0; i < canvas.width; i += 40) {
+          for (let j = 0; j < canvas.height; j += 40) {
+            context.fillText('❤️', i, j);
+          }
+        }
+      });
+    }
+  }, [isExpanded, localIsScratched]);
+
+  const handleReveal = async () => {
+    if (isScratchInProgress) return;
+    
+    setIsScratchInProgress(true);
+    try {
+      const result = await onScratch(id);
+      if (result?.code) {
+        setRevealedCode(result.code);
+        setLocalIsScratched(true);
+        setLocalCode(result.code);
+        
+        // Update canvas to show revealed code
+        if (canvasRef.current && contextRef.current) {
+          const canvas = canvasRef.current;
+          const context = contextRef.current;
+          
+          // Clear canvas
+          context.globalCompositeOperation = 'source-over';
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Draw white background
+          context.fillStyle = 'white';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Draw revealed code
+          context.font = 'bold 48px Arial';
+          context.fillStyle = '#000';
+          context.textAlign = 'center';
+          context.textBaseline = 'middle';
+          context.fillText(result.code, canvas.width / 2, canvas.height / 2);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to scratch card:', error);
+    } finally {
+      setIsScratchInProgress(false);
+    }
+  };
+
+  const renderExpandedCard = () => (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm"
+      onClick={() => setIsExpanded(false)}
+    >
+      <div
+        className="relative w-full max-w-lg aspect-[3/4] bg-white border-4 border-black rounded-lg shadow-[6px_6px_0_0_#000]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {(localIsScratched || revealedCode) ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+            <div className="text-4xl font-bold mb-4">{revealedCode || localCode}</div>
+            <p className="text-sm text-gray-500">Click outside to close</p>
+          </div>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            onMouseDown={() => isDrawing.current = true}
+            onMouseUp={() => isDrawing.current = false}
+            onMouseOut={() => isDrawing.current = false}
+            onMouseMove={handleScratch}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              isDrawing.current = true;
+            }}
+            onTouchMove={(e) => {
+              e.preventDefault();
+              handleScratch(e);
+            }}
+            onTouchEnd={() => isDrawing.current = false}
+            className="absolute inset-0 w-full h-full cursor-pointer rounded-lg touch-none"
+          />
+        )}
+      </div>
+    </div>
+  );
+
+  const handleScratch = (e) => {
+    if (!isDrawing.current || !contextRef.current || isScratchInProgress) return;
+
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const y = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    const offsetX = x - rect.left;
+    const offsetY = y - rect.top;
 
-    const context = canvas.getContext('2d');
-    contextRef.current = context;
-
-    // Set canvas size
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-
-    // Fill with scratch-off color
-    context.fillStyle = '#fce7f3'; // Light pink
-    context.fillRect(0, 0, canvas.width, canvas.height);
-  }, []);
-
-  const handleScratch = async (e) => {
-    if (isLocked || isScratched || !contextRef.current) return;
-
-    const { offsetX, offsetY } = e.nativeEvent;
     const context = contextRef.current;
-
     context.globalCompositeOperation = 'destination-out';
     context.beginPath();
     context.arc(offsetX, offsetY, 20, 0, Math.PI * 2);
     context.fill();
 
-    // Calculate percentage scratched
-    const imageData = context.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const pixels = imageData.data;
     let transparent = 0;
-    
     for (let i = 0; i < pixels.length; i += 4) {
-      if (pixels[i + 3] === 0) transparent++;
+      if (pixels[i + 3] < 128) transparent++;
     }
 
-    const percentScratched = (transparent / (pixels.length / 4)) * 100;
-
-    if (percentScratched > 50 && !isScratching) {
-      setIsScratching(true);
-      try {
-        const result = await onScratch(id);
-        setIsScratched(true);
-      } catch (error) {
-        console.error('Failed to scratch card:', error);
-      }
-      setIsScratching(false);
+    const progress = (transparent / (pixels.length / 4)) * 100;
+    
+    if (progress > 50 && !localIsScratched && !isScratchInProgress) {
+      handleReveal();
     }
   };
 
-  return (
-    <div className="relative w-full aspect-[3/4]">
-      <div className="absolute inset-0 bg-white border-4 border-black rounded-lg shadow-[6px_6px_0_0_#000] overflow-hidden">
-        <div className="w-full h-full flex items-center justify-center">
-          {isScratched ? (
-            <div className="text-2xl font-bold">{code}</div>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              {isLocked ? (
-                <div className="relative flex flex-col items-center">
-                  <div className="absolute w-full h-full">
-                    <div className="chain-animation">
-                      <div className="chain">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <div key={i} className="chain-link" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-4xl z-10">🔒</span>
-                  <p className="text-sm font-bold mt-4 text-gray-600">Already Scratched</p>
-                </div>
-              ) : (
-                <>
-                  <canvas
-                    ref={canvasRef}
-                    onMouseDown={() => setIsScratching(true)}
-                    onMouseUp={() => setIsScratching(false)}
-                    onMouseMove={handleScratch}
-                    onTouchMove={(e) => {
-                      e.preventDefault();
-                      const touch = e.touches[0];
-                      const rect = e.target.getBoundingClientRect();
-                      const event = {
-                        nativeEvent: {
-                          offsetX: touch.clientX - rect.left,
-                          offsetY: touch.clientY - rect.top
-                        }
-                      };
-                      handleScratch(event);
-                    }}
-                    className="absolute inset-0 w-full h-full cursor-pointer"
-                  />
-                  <div className="text-center pointer-events-none">
-                    <span className="text-4xl mb-2">❤️</span>
-                    <p className="text-sm font-bold mt-2">Scratch me!</p>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+  if (localIsScratched || initialIsScratched) {
+    return (
+      <div className="relative w-full aspect-[3/4]">
+        <div 
+          className="absolute inset-0 bg-white border-4 border-black rounded-lg shadow-[6px_6px_0_0_#000] overflow-hidden cursor-pointer"
+          onClick={() => setIsExpanded(true)}
+        >
+          <div className="w-full h-full flex flex-col items-center justify-center p-4">
+            <div className="text-4xl font-bold mb-4">{localCode || initialCode}</div>
+            {scratchedAt && (
+              <p className="text-sm text-gray-500">
+                Scratched {new Date(scratchedAt).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+        </div>
+        {isExpanded && renderExpandedCard()}
+      </div>
+    );
+  }
+
+  if (isLocked) {
+    return (
+      <div className="relative w-full aspect-[3/4]">
+        <div className="absolute inset-0 bg-white border-4 border-black rounded-lg shadow-[6px_6px_0_0_#000] overflow-hidden">
+          <div className="w-full h-full flex flex-col items-center justify-center p-4">
+            <span className="text-4xl mb-2">🔒</span>
+            <p className="text-sm font-medium">Already Scratched</p>
+          </div>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full aspect-[3/4]">
+      <div
+        onClick={() => setIsExpanded(true)}
+        className="absolute inset-0 bg-white border-4 border-black rounded-lg shadow-[6px_6px_0_0_#000] overflow-hidden cursor-pointer"
+      >
+        <div className="w-full h-full flex flex-col items-center justify-center p-4">
+          <div className="mb-4">
+            <div className="heart text-4xl">❤️</div>
+            <h3 className="text-lg font-bold text-center mt-2">Blind Date</h3>
+          </div>
+        </div>
+      </div>
+      {isExpanded && renderExpandedCard()}
     </div>
   );
 }
