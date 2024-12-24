@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from '../../utils/axios';
+import { useSocket } from '../../context/SocketContext';
 import ScratchCard from './ScratchCard';
 
 function CardGrid() {
@@ -7,6 +8,7 @@ function CardGrid() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
+  const socket = useSocket();
 
   const fetchCards = async () => {
     try {
@@ -35,10 +37,42 @@ function CardGrid() {
     fetchUserAndCards();
   }, []);
 
+  useEffect(() => {
+    if (socket && userData) {
+      socket.emit('join', {
+        gender: userData.questionnaire.gender
+      });
+
+      socket.on('cardUpdate', (data) => {
+        setCards(prevCards => {
+          const updatedCards = prevCards.map(card => {
+            if (card._id === data.cardId) {
+              return {
+                ...card,
+                isLocked: true,
+                isScratched: false
+              };
+            }
+            return card;
+          });
+          return updatedCards;
+        });
+      });
+
+      return () => {
+        socket.off('cardUpdate');
+      };
+    }
+  }, [socket, userData]);
+
   const handleScratch = async (cardId) => {
     try {
       const response = await axios.post(`/cards/scratch/${cardId}`);
       
+      if (response.data.alreadyScratched) {
+        return { code: response.data.code };
+      }
+
       // Update cards state with revealed code
       setCards(prevCards => 
         prevCards.map(card => 
@@ -56,14 +90,11 @@ function CardGrid() {
       // Handle match if any
       if (response.data.matched && response.data.matchedUser) {
         console.log('🎉 Match found!', response.data.matchedUser);
+        // TODO: Show match notification
       }
 
       return response.data;
     } catch (err) {
-      if (err.response?.status === 400 && err.response.data?.code) {
-        // If card was already scratched, return existing code
-        return { code: err.response.data.code };
-      }
       console.error('Scratch error:', err.response?.data?.message || 'Failed to scratch card');
       throw err;
     }
