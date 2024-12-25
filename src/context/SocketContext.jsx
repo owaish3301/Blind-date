@@ -19,7 +19,7 @@ export function SocketProvider({ children }) {
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnectionDelayMax: 5000, 
       timeout: 20000,
       forceNew: true,
       auth: {
