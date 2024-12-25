@@ -7,7 +7,7 @@ export function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const baseUrl = process.env.NODE_ENV === "production"
+    const baseUrl = import.meta.env.PROD
       ? "https://blind-date-backend.vercel.app"
       : "http://localhost:5000";
 
@@ -18,11 +18,10 @@ export function SocketProvider({ children }) {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      timeout: 20000,
       autoConnect: true,
       auth: {
-        token: localStorage.getItem("token")
-      }
+        token: localStorage.getItem("token"),
+      },
     });
 
     setSocket(newSocket);
@@ -35,8 +34,7 @@ export function SocketProvider({ children }) {
   }, []);
 
   return (
-    <SocketContext.Provider value={socket}>
-      {children}</SocketContext.Provider>
+    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
   );
 }
 
