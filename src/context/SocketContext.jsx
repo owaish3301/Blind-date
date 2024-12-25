@@ -12,31 +12,18 @@ export function SocketProvider({ children }) {
       transports: ['polling'],
       path: '/socket.io/',
       secure: true,
-      rejectUnauthorized: false,
+      autoConnect: true,
       reconnection: true,
-      reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      timeout: 20000,
+      reconnectionAttempts: 5,
       extraHeaders: {
         'x-auth-token': localStorage.getItem('token')
-      },
-      cors: {
-        origin: 'https://blind-date-seven.vercel.app',
-        methods: ['GET', 'POST', 'OPTIONS'],
-        credentials: true,
-        allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
-      },
-      pingTimeout: 60000,
-      pingInterval: 25000,
-      allowEIO3: true,
-      cookie: {
-        name: 'io',
-        path: '/',
-        httpOnly: true,
-        sameSite: 'none',
-        secure: true
       }
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
     });
 
     setSocket(newSocket);
