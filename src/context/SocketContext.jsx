@@ -12,8 +12,8 @@ export function SocketProvider({ children }) {
       : "http://localhost:5000";
 
     const newSocket = io(baseUrl, {
-      path: "/socket.io",
-      transports: ["polling"],
+      path: "/socket.io/",
+      transports: ["websocket", "polling"],
       withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 5,
@@ -22,23 +22,30 @@ export function SocketProvider({ children }) {
       auth: {
         token: localStorage.getItem("token"),
       },
+      extraHeaders: {
+        "x-auth-token": localStorage.getItem("token"),
+      },
     });
 
     newSocket.on("connect_error", (err) => {
       console.error("Socket connect error:", err.message);
+      // Fallback to polling if websocket fails
+      if (err.message === "websocket error") {
+        newSocket.io.opts.transports = ["polling"];
+      }
     });
 
     setSocket(newSocket);
 
     return () => {
-      if (newSocket) {
-        newSocket.disconnect();
-      }
+      if (newSocket) newSocket.disconnect();
     };
   }, []);
 
   return (
-    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
+    <SocketContext.Provider value={socket}>
+      {children}
+    </SocketContext.Provider>
   );
 }
 
