@@ -7,32 +7,22 @@ export function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const SOCKET_URL =
-      process.env.NODE_ENV === "production"
-        ? "https://blind-date-backend.vercel.app"
-        : "http://localhost:5000";
+    const baseUrl = process.env.NODE_ENV === "production"
+      ? "https://blind-date-backend.vercel.app"
+      : "http://localhost:5000";
 
-    const newSocket = io(SOCKET_URL, {
-      path: "/socket.io",
-      transports: ["polling", "websocket"],
+    const newSocket = io(baseUrl, {
+      path: "/socket.io/",
+      transports: ["polling"],
       withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
       timeout: 20000,
       autoConnect: true,
-      extraHeaders: {
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    });
-
-    newSocket.on("connect", () => {
-      console.log("Socket connected");
-    });
-
-    newSocket.on("disconnect", () => {
-      console.log("Socket disconnected");
+      auth: {
+        token: localStorage.getItem("token")
+      }
     });
 
     setSocket(newSocket);
@@ -45,7 +35,8 @@ export function SocketProvider({ children }) {
   }, []);
 
   return (
-    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
+    <SocketContext.Provider value={socket}>
+      {children}</SocketContext.Provider>
   );
 }
 
