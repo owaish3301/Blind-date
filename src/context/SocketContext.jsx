@@ -12,7 +12,7 @@ export function SocketProvider({ children }) {
       : "http://localhost:5000";
 
     const newSocket = io(baseUrl, {
-      path: "/socket.io/",
+      path: "/socket.io",
       transports: ["polling"],
       withCredentials: true,
       reconnection: true,
@@ -22,6 +22,10 @@ export function SocketProvider({ children }) {
       auth: {
         token: localStorage.getItem("token"),
       },
+    });
+
+    newSocket.on("connect_error", (err) => {
+      console.error("Socket connect error:", err.message);
     });
 
     setSocket(newSocket);
