@@ -13,24 +13,18 @@ export function SocketProvider({ children }) {
 
     const newSocket = io(baseUrl, {
       withCredentials: true,
-      transports: ['polling', 'websocket'], // Try polling first
+      transports: ['polling', 'websocket'],
       path: '/socket.io/',
-      secure: true,
-      rejectUnauthorized: false,
+      autoConnect: true,
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+      forceNew: true,
       auth: {
         token: localStorage.getItem('token')
       }
-    });
-
-    newSocket.on('connect', () => {
-      console.log('Socket connected successfully');
-    });
-
-    newSocket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
     });
 
     setSocket(newSocket);
