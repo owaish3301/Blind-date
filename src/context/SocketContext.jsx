@@ -7,23 +7,35 @@ export function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://blind-date-backend.vercel.app'
-      : 'http://localhost:5000';
-
-    const newSocket = io(baseUrl, {
+    const newSocket = io('https://blind-date-backend.vercel.app', {
       withCredentials: true,
-      transports: ['polling', 'websocket'],
+      transports: ['polling'],
       path: '/socket.io/',
-      autoConnect: true,
+      secure: true,
+      rejectUnauthorized: false,
       reconnection: true,
-      reconnectionAttempts: 10,
+      reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000, 
+      reconnectionDelayMax: 5000,
       timeout: 20000,
-      forceNew: true,
-      auth: {
-        token: localStorage.getItem('token')
+      extraHeaders: {
+        'x-auth-token': localStorage.getItem('token')
+      },
+      cors: {
+        origin: 'https://blind-date-seven.vercel.app',
+        methods: ['GET', 'POST', 'OPTIONS'],
+        credentials: true,
+        allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+      },
+      pingTimeout: 60000,
+      pingInterval: 25000,
+      allowEIO3: true,
+      cookie: {
+        name: 'io',
+        path: '/',
+        httpOnly: true,
+        sameSite: 'none',
+        secure: true
       }
     });
 
