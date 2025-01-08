@@ -6,13 +6,13 @@ import QuestionnaireForm from './components/questionnaireForm';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import { Analytics } from "@vercel/analytics/react"
-import { SocketProvider } from './context/SocketContext';
+import { SupabaseProvider } from "./context/SupabaseContext";
 
 function App() {
   return (
     <>
       <Analytics />
-      <SocketProvider>
+      <SupabaseProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/signup" element={
@@ -44,7 +44,7 @@ function App() {
             <Route path="/" element={<Navigate to="/signin" />} />
           </Routes>
         </BrowserRouter>
-      </SocketProvider>
+      </SupabaseProvider>
     </>
   );
 }
