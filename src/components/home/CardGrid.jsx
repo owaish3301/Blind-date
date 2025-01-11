@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "../../utils/axios";
 import { useSupabase } from "../../context/SupabaseContext";
 import ScratchCard from "./ScratchCard";
+import { useNotifications } from "../../context/NotificationContext";
 
 function CardGrid() {
   const [cards, setCards] = useState([]);
@@ -9,6 +10,7 @@ function CardGrid() {
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
   const supabase = useSupabase();
+  const { addNotification } = useNotifications();
 
   const fetchCards = async () => {
     try {
@@ -99,16 +101,25 @@ function CardGrid() {
 
       // Handle match if any
       if (response.data.matched && response.data.matchedUser) {
-        console.log("🎉 Match found!", response.data.matchedUser);
-        // TODO: Show match notification
+        try{
+          const matchNotification = {
+            type: "match",
+            message: `You matched with ${response.data.matchedUser.name}!`,
+            metadata: {
+              matchedUser: response.data.matchedUser,
+              code: response.data.code,
+            },
+          };
+          const notifResponse = await axios.post("/notifications", matchNotification);
+          addNotification(notifResponse.data); // Use the saved notification from DB
+        }
+        catch(err){
+          console.error("Failed to create match notification:", err);
+        }
       }
-
       return response.data;
     } catch (err) {
-      console.error(
-        "Scratch error:",
-        err.response?.data?.message || "Failed to scratch card"
-      );
+      console.error("Scratch error:", err);
       throw err;
     }
   };

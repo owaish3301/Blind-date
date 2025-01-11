@@ -14,6 +14,9 @@ function ScratchCard({
   const canvasRef = useRef(null);
   const contextRef = useRef(null);
   const isDrawing = useRef(false);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const scratchThreshold = useRef(50); 
+  const lastProgress = useRef(0);
 
   useEffect(() => {
     setLocalIsScratched(initialIsScratched);
@@ -35,20 +38,40 @@ function ScratchCard({
   }, [isExpanded, localIsScratched]);
 
   const handleReveal = async () => {
+    if (isRevealing) return;
+
     try {
+      setIsRevealing(true);
       const result = await onScratch(id);
       if (result?.code) {
         setLocalIsScratched(true);
         setLocalCode(result.code);
-        // Don't close the expanded view after scratching
       }
     } catch (error) {
       console.error("Failed to scratch card:", error);
+    } finally {
+      setIsRevealing(false);
     }
+  };
+  
+  const calculateScratchProgress = (context, canvas) => {
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+    let transparent = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i + 3] < 128) transparent++;
+    }
+    return (transparent / (pixels.length / 4)) * 100;
   };
 
   const handleScratch = (e) => {
-    if (!isDrawing.current || !contextRef.current) return;
+    if (
+      !isDrawing.current ||
+      !contextRef.current ||
+      isRevealing ||
+      localIsScratched
+    )
+      return;
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -63,17 +86,15 @@ function ScratchCard({
     context.arc(offsetX, offsetY, 20, 0, Math.PI * 2);
     context.fill();
 
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = imageData.data;
-    let transparent = 0;
-    for (let i = 0; i < pixels.length; i += 4) {
-      if (pixels[i + 3] < 128) transparent++;
-    }
-
-    const progress = (transparent / (pixels.length / 4)) * 100;
-    if (progress > 50 && !localIsScratched) {
+    const currentProgress = calculateScratchProgress(context, canvas);
+    if (
+      currentProgress > scratchThreshold.current &&
+      currentProgress > lastProgress.current &&
+      !localIsScratched
+    ) {
       handleReveal();
     }
+    lastProgress.current = currentProgress;
   };
 
   const handleClose = () => {
@@ -86,7 +107,7 @@ function ScratchCard({
     }
   };
 
-  if (isLocked) {
+  if (isLocked && !localIsScratched) {
     return (
       <div className="relative w-full aspect-[3/4]">
         <div className="absolute inset-0 bg-white border-4 border-black rounded-lg shadow-[6px_6px_0_0_#000] overflow-hidden">
