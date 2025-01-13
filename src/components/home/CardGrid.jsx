@@ -44,30 +44,31 @@ function CardGrid() {
       const channel = supabase
         .channel("card-updates")
         .on("broadcast", { event: "card-update" }, (event) => {
-          // Extract payload from event object correctly
           const payload = event.payload;
 
-          if (!payload || !payload.cardId) {
+          if (!payload || !payload.cardId || !payload.scratcherGender) {
             console.warn("Received invalid payload:", event);
             return;
           }
 
-          setCards((prevCards) => {
-            return prevCards.map((card) => {
-              // Convert both IDs to string for comparison
-              const cardId = card._id?.toString();
-              const payloadCardId = payload.cardId?.toString();
+          // Only lock the card if the scratcher has the same gender as the current user
+          if (payload.scratcherGender === userData.questionnaire.gender) {
+            setCards((prevCards) => {
+              return prevCards.map((card) => {
+                const cardId = card._id?.toString();
+                const payloadCardId = payload.cardId?.toString();
 
-              if (cardId && payloadCardId && cardId === payloadCardId) {
-                return {
-                  ...card,
-                  isLocked: true,
-                  isScratched: false,
-                };
-              }
-              return card;
+                if (cardId && payloadCardId && cardId === payloadCardId) {
+                  return {
+                    ...card,
+                    isLocked: true,
+                    isScratched: false,
+                  };
+                }
+                return card;
+              });
             });
-          });
+          }
         })
         .subscribe();
 

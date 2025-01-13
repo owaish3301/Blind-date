@@ -107,7 +107,7 @@ function ScratchCard({
     }
   };
 
-  if (isLocked && !localIsScratched) {
+  if (isLocked && !localIsScratched && !localCode) {
     return (
       <div className="relative w-full aspect-[3/4]">
         <div className="absolute inset-0 bg-white border-4 border-black rounded-lg shadow-[6px_6px_0_0_#000] overflow-hidden">
@@ -120,7 +120,7 @@ function ScratchCard({
     );
   }
 
-  if (localIsScratched || initialIsScratched) {
+  if (localIsScratched || initialIsScratched || localCode) {
     return (
       <div className="relative w-full aspect-[3/4]">
         <div

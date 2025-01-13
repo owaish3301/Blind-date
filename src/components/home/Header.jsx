@@ -66,10 +66,10 @@ function Header({ username }) {
   };
 
   const NotificationContent = () => (
-    <>
+    <div key="notification-content" className="notification-panel">
       {isMobile ? (
-        // Mobile header
-        <div className="p-3 border-b-2 border-black grid grid-cols-3 items-center bg-pink-50">
+        // Mobile header with key
+        <div key="mobile-header" className="p-3 border-b-2 border-black grid grid-cols-3 items-center bg-pink-50">
           <button
             onClick={() => setIsNotificationOpen(false)}
             className="p-1 hover:bg-pink-100 rounded-full justify-self-start"
@@ -85,8 +85,8 @@ function Header({ username }) {
           </button>
         </div>
       ) : (
-        // Desktop header
-        <div className="p-3 border-b-2 border-black flex items-center justify-between bg-pink-50">
+        // Desktop header with key
+        <div key="desktop-header" className="p-3 border-b-2 border-black flex items-center justify-between bg-pink-50">
           <h3 className="font-bold pl-2">Notifications</h3>
           <button
             onClick={handleMarkAllRead}
@@ -97,19 +97,20 @@ function Header({ username }) {
         </div>
       )}
 
-      <div className="overflow-y-auto max-h-[60vh]">
+      <div key="notifications-container" className="overflow-y-auto max-h-[60vh]">
         {loading ? (
-          <div className="p-4 text-center text-gray-500">
+          <div key="loading-state" className="p-4 text-center text-gray-500">
             Loading...
           </div>
         ) : notifications.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
+          <div key="empty-state" className="p-4 text-center text-gray-500">
             No notifications yet
           </div>
         ) : (
+          // Map through notifications with unique keys
           notifications.map((notification) => (
             <div
-              key={notification._id}
+              key={notification._id || `notification-${Date.now()}-${Math.random()}`}
               onClick={() => handleNotificationClick(notification._id)}
               className={`p-3 border-b border-gray-200 hover:bg-pink-50 transition-colors cursor-pointer ${
                 !notification.read ? "bg-pink-50" : ""
@@ -138,7 +139,7 @@ function Header({ username }) {
           ))
         )}
       </div>
-    </>
+    </div>
   );
 
   return (
