@@ -44,6 +44,7 @@ function SignIn() {
       setFormData({ email: '', password: '' });
       
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem("userId", response.data.userId);
       navigate('/home');
     } catch (error) {
       if (error.response?.status === 400) {
