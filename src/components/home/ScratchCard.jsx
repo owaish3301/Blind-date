@@ -211,6 +211,14 @@ function ScratchCard({
             >
               ✕
             </button>
+            {/* Add reveal button */}
+            <button
+              onClick={handleReveal}
+              disabled={isRevealing}
+              className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 px-6 py-3 bg-pink-500 text-white font-bold rounded border-4 border-black shadow-[4px_4px_0_0_#000] hover:shadow-[8px_8px_0_0_#000] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isRevealing ? "Revealing..." : "Reveal Card 🎯"}
+            </button>
           </div>
         </div>
       )}
