@@ -48,8 +48,28 @@ function Header({ username }) {
   const handleMarkAllRead = () => {
     markAllAsRead();
   };
-  const handleNotificationClick = (id) => {
-    markAsRead(id);
+  const handleNotificationClick = async (notification) => {
+    try {
+      if (!notification || !notification._id) {
+        console.error("Invalid notification:", notification);
+        return;
+      }
+      await markAsRead(notification._id);
+
+      // If it's a match notification, handle match details
+      if (notification.type === "match" && notification.metadata?.matchedUser) {
+        const userData = {
+          _id: notification.metadata.matchedUser._id,
+          name: notification.metadata.matchedUser.name,
+          age: notification.metadata.matchedUser.age,
+          course: notification.metadata.matchedUser.course,
+          year: notification.metadata.matchedUser.year,
+        };
+        // Handle match related actions here
+      }
+    } catch (err) {
+      console.error("Error handling notification click:", err);
+    }
   };
 
   const getNotificationIcon = (type) => {
@@ -111,7 +131,7 @@ function Header({ username }) {
           notifications.map((notification) => (
             <div
               key={notification._id || `notification-${Date.now()}-${Math.random()}`}
-              onClick={() => handleNotificationClick(notification._id)}
+              onClick={() => handleNotificationClick(notification)}
               className={`p-3 border-b border-gray-200 hover:bg-pink-50 transition-colors cursor-pointer ${
                 !notification.read ? "bg-pink-50" : ""
               }`}

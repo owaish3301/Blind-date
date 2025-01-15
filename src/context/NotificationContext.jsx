@@ -60,15 +60,24 @@ export function NotificationProvider({ children }) {
   };
 
   const markAsRead = async (notificationId) => {
+    if (!notificationId) {
+      console.error("No notification ID provided");
+      return;
+    }
+
     try {
-      await axios.put(`/notifications/${notificationId}/read`);
-      setNotifications((prev) =>
-        prev.map((notif) =>
-          notif._id === notificationId ? { ...notif, read: true } : notif
-        )
-      );
+      const response = await axios.put(`/notifications/${notificationId}/read`);
+
+      if (response.data) {
+        setNotifications((prev) =>
+          prev.map((notif) =>
+            notif._id === notificationId ? { ...notif, read: true } : notif
+          )
+        );
+      }
     } catch (err) {
       console.error("Error marking notification as read:", err);
+      throw err;
     }
   };
 
