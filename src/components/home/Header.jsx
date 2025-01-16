@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { BellIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { BellIcon, ArrowLeftIcon, ChatBubbleBottomCenterIcon } from "@heroicons/react/24/outline";
 import { useNotifications } from "../../context/NotificationContext";
 
 function Header({ username }) {
@@ -197,6 +197,14 @@ function Header({ username }) {
               </div>
             )}
           </div>
+
+          {/* Chat Icon */}
+          <button
+            onClick={() => navigate('/chat')}
+            className="relative p-2 hover:bg-pink-50 rounded-full transition-colors"
+          >
+            <ChatBubbleBottomCenterIcon className="h-6 w-6" />
+          </button>
 
           {/* Profile Menu */}
           <div className="relative" ref={menuRef}>
