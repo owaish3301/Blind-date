@@ -21,6 +21,25 @@ export function ChatProvider({ children }) {
 
   useEffect(() => {
     fetchChatUsers();
+
+    // Subscribe to chat relationship updates
+    const channel = supabase
+      .channel("chat-updates")
+      .on("broadcast", { event: "new-chat" }, ({ payload }) => {
+        const currentUserId = localStorage.getItem("userId");
+        // Check if this user is part of the new chat relationship
+        if (
+          payload.user1_id === currentUserId ||
+          payload.user2_id === currentUserId
+        ) {
+          fetchChatUsers(); // Refresh chat list
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchChatUsers = async () => {
@@ -127,7 +146,7 @@ export function ChatProvider({ children }) {
       chats: getCurrentUserChats(), 
       sendMessage,
       unreadCounts,
-      lastMessages
+      lastMessages,
     }}>
       {children}
     </ChatContext.Provider>
