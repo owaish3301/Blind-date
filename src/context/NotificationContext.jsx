@@ -21,15 +21,15 @@ export function NotificationProvider({ children }) {
   };
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
+    const userId = localStorage.getItem("userId");
+    if (userId) {
       fetchNotifications();
 
       // Subscribe to real-time updates
       const channel = supabase
         .channel("notification-updates")
         .on("broadcast", { event: "notification" }, ({ payload }) => {
-          console.log("Received notification:", payload);
-          if (payload.userId === localStorage.getItem("userId")) {
+          if (payload.userId === userId) {
             setNotifications((prev) => {
               // Avoid duplicate notifications
               const exists = prev.some(

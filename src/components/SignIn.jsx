@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import { encryptPassword } from '../utils/encryption';
+import { useChat } from "../context/ChatContext";
+import { useNotifications } from "../context/NotificationContext";
 
 function SignIn() {
   const [formData, setFormData] = useState({
@@ -10,6 +12,8 @@ function SignIn() {
   });
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
+  const { fetchChatUsers } = useChat();
+  const { fetchNotifications } = useNotifications();
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -34,18 +38,22 @@ function SignIn() {
 
     try {
       const encryptedPassword = encryptPassword(formData.password);
-      
-      const response = await axios.post('/auth/signin', {
+
+      const response = await axios.post("/auth/signin", {
         email: formData.email,
-        password: encryptedPassword
+        password: encryptedPassword,
       });
 
       // Clear sensitive data immediately
-      setFormData({ email: '', password: '' });
-      
-      localStorage.setItem('token', response.data.token);
+      setFormData({ email: "", password: "" });
+
+      localStorage.setItem("token", response.data.token);
       localStorage.setItem("userId", response.data.userId);
-      navigate('/home');
+      
+      // Fetch data before navigation
+      await Promise.all([fetchChatUsers(), fetchNotifications()]);
+
+      navigate("/home");
     } catch (error) {
       if (error.response?.status === 400) {
         setSubmitError('Invalid email or password');

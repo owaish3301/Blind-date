@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useChat } from '../../context/ChatContext';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { useState } from "react";
+import { useChat } from "../../context/ChatContext";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 function ChatWindow() {
   const { selectedUser, chats, sendMessage, deselectUser } = useChat();
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
   if (!selectedUser) {
     return (
@@ -15,28 +15,43 @@ function ChatWindow() {
   }
 
   const handleSendMessage = () => {
-    if (message.trim() === '') return;
+    if (message.trim() === "") return;
     sendMessage(message);
-    setMessage('');
+    setMessage("");
   };
 
   return (
     <div className="flex flex-col h-screen bg-white">
       <div className="p-4 border-b-4 border-black flex items-center bg-white">
-        <button 
-          onClick={deselectUser} 
+        <button
+          onClick={deselectUser}
           className="md:hidden mr-4 p-2 hover:bg-pink-50 rounded-full transition-colors"
         >
           <ArrowLeftIcon className="h-6 w-6" />
         </button>
-        <img src={selectedUser.avatar} alt={selectedUser.name} className="w-12 h-12 rounded-full mr-4" />
+        <img
+          src={selectedUser.avatar}
+          alt={selectedUser.name}
+          className="w-12 h-12 rounded-full mr-4"
+        />
         <h2 className="text-xl font-bold">{selectedUser.name}</h2>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto p-4">
-        {chats.map(chat => (
-          <div key={chat.id} className={`flex ${chat.userId === '1' ? 'justify-end' : 'justify-start'} mb-4`}>
-            <div className={`max-w-xs p-3 rounded-lg border-2 ${chat.userId === '1' ? 'bg-pink-200 border-pink-400' : 'bg-white border-black'}`}>
+        {chats.map((chat) => (
+          <div
+            key={chat.id}
+            className={`flex ${
+              chat.userId === "1" ? "justify-end" : "justify-start"
+            } mb-4`}
+          >
+            <div
+              className={`max-w-xs p-3 rounded-lg border-2 ${
+                chat.userId === "1"
+                  ? "bg-pink-200 border-pink-400"
+                  : "bg-white border-black"
+              }`}
+            >
               <p className="text-sm">{chat.message}</p>
               <p className="text-xs text-gray-500 mt-1">{chat.timestamp}</p>
             </div>
@@ -49,7 +64,7 @@ function ChatWindow() {
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+          onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
           className="flex-1 p-3 border-2 border-black rounded bg-pink-50"
           placeholder="Type your message..."
         />
