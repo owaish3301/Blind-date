@@ -10,7 +10,7 @@ function CardGrid() {
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
   const supabase = useSupabase();
-  const { addNotification } = useNotifications();
+  const { setNotifications } = useNotifications();
 
   const fetchCards = async () => {
     try {
@@ -112,7 +112,7 @@ function CardGrid() {
             },
           };
           const notifResponse = await axios.post("/notifications", matchNotification);
-          addNotification(notifResponse.data); // Use the saved notification from DB
+          setNotifications((prev) => [notifResponse.data, ...prev]);
         }
         catch(err){
           console.error("Failed to create match notification:", err);

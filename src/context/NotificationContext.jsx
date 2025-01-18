@@ -10,6 +10,8 @@ export function NotificationProvider({ children }) {
   const supabase = useSupabase();
 
   const fetchNotifications = async () => {
+    if(!localStorage.getItem('userId')) return;
+    console.log('fetching notifications');
     try {
       const response = await axios.get("/notifications");
       setNotifications(response.data);
@@ -20,33 +22,37 @@ export function NotificationProvider({ children }) {
     }
   };
 
-  useEffect(() => {
+  const setupNotificationSubscription = () => {
     const userId = localStorage.getItem("userId");
-    if (userId) {
-      fetchNotifications();
+    if (!userId) return;
 
-      // Subscribe to real-time updates
-      const channel = supabase
-        .channel("notification-updates")
-        .on("broadcast", { event: "notification" }, ({ payload }) => {
-          if (payload.userId === userId) {
-            setNotifications((prev) => {
-              // Avoid duplicate notifications
-              const exists = prev.some(
-                (n) => n._id === payload.notification._id
-              );
-              if (exists) return prev;
-              return [payload.notification, ...prev];
-            });
-          }
-        })
-        .subscribe();
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel("notification-updates")
+      .on("broadcast", { event: "notification" }, ({ payload }) => {
+        if (payload.userId === userId) {
+          setNotifications((prev) => {
+            // Avoid duplicate notifications
+            const exists = prev.some(
+              (n) => n._id === payload.notification._id
+            );
+            if (exists) return prev;
+            return [payload.notification, ...prev];
+          });
+        }
+      })
+      .subscribe();
 
-      return () => {
-        channel.unsubscribe();
-      };
-    }
-  }, [supabase]);
+    return () => {
+      channel.unsubscribe();
+    };
+  }
+
+  useEffect(() => {
+    fetchNotifications();
+    const cleanup = setupNotificationSubscription();
+    return cleanup;
+  }, []);
   
   const markAllAsRead = async () => {
     try {
@@ -94,6 +100,8 @@ export function NotificationProvider({ children }) {
         markAsRead,
         addNotification,
         fetchNotifications,
+        setNotifications,
+        setupNotificationSubscription
       }}
     >
       {children}

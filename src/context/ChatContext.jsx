@@ -19,12 +19,9 @@ export function ChatProvider({ children }) {
     setLoading(true);
   };
 
-  useEffect(() => {
+  const setupMessageSubscription = () => {
     const userId = localStorage.getItem("userId");
     if (userId) {
-      resetChatState(); // Reset chat state beofre fetching new data
-      fetchChatUsers();
-
       const channel = supabase
         .channel("chat-messages")
         .on("broadcast", { event: "new-message" }, ({ payload }) => {
@@ -65,10 +62,18 @@ export function ChatProvider({ children }) {
     else{
       resetChatState(); // Reset chat state when userid is empty
     }
+  };
+
+  useEffect(() => {
+    resetChatState(); // Reset chat state beofre fetching new data
+    fetchChatUsers();
+    const cleanup = setupMessageSubscription();
+    return cleanup;
   }, []);
 
   const fetchChatUsers = async () => {
     const currentUserId = localStorage.getItem("userId");
+    console.log("fetching chat users")
     if (!currentUserId) return;
 
     try {
@@ -230,7 +235,8 @@ export function ChatProvider({ children }) {
         sendMessage,
         lastMessages,
         fetchChatUsers,
-        resetChatState
+        resetChatState,
+        setupMessageSubscription
       }}
     >
       {children}

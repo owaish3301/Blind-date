@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import { encryptPassword } from '../utils/encryption';
-import { useChat } from "../context/ChatContext";
-import { useNotifications } from "../context/NotificationContext";
 
 function SignUp() {
   const [formData, setFormData] = useState({
@@ -14,8 +12,6 @@ function SignUp() {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const navigate = useNavigate();
-  const { fetchChatUsers } = useChat();
-  const { fetchNotifications } = useNotifications();
 
   const validateForm = () => {
     const newErrors = {};
@@ -55,7 +51,6 @@ function SignUp() {
 
       localStorage.setItem('token', response.data.token);
       localStorage.setItem("userId", response.data.userId);
-      await Promise.all([fetchChatUsers(), fetchNotifications()]);
       
       navigate('/questionnaire'); // Changed from /home to /questionnaire
     } catch (error) {

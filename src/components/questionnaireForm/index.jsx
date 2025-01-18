@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { formPages } from './FormPages';
 import { useQuestionnaire } from './useQuestionnaire';
 import FormField from './FormField';
+import { useChat } from "../../context/ChatContext";
+import { useNotifications } from "../../context/NotificationContext";
 
 function QuestionnaireForm() {
   const navigate = useNavigate();
@@ -16,6 +18,9 @@ function QuestionnaireForm() {
     handlePrevious,
     handleSubmit
   } = useQuestionnaire();
+  const { fetchChatUsers, setupMessageSubscription } = useChat();
+  const { fetchNotifications, setupNotificationSubscription } = useNotifications();
+
 
   const currentPageData = formPages[currentPage];
 
@@ -23,6 +28,12 @@ function QuestionnaireForm() {
     if (currentPage === formPages.length - 1) {
       const success = await handleSubmit();
       if (success) {
+        await Promise.all([
+          fetchChatUsers(),
+          fetchNotifications(),
+          setupNotificationSubscription(),
+          setupMessageSubscription(),
+        ]);
         navigate('/home');
       }
     } else {

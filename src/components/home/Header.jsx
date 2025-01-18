@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { BellIcon, ArrowLeftIcon, ChatBubbleBottomCenterIcon } from "@heroicons/react/24/outline";
 import { useNotifications } from "../../context/NotificationContext";
 import { useChat } from "../../context/ChatContext";
-import { use } from "react";
 
 function Header({ username }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,7 +12,7 @@ function Header({ username }) {
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const { notifications, loading, markAllAsRead, markAsRead } = useNotifications();
-  const { resetChatState } = useChat();
+  const { resetChatState, fetchChatUsers } = useChat();
 
   // Handle window resize
   useEffect(() => {
@@ -203,7 +202,10 @@ function Header({ username }) {
 
           {/* Chat Icon */}
           <button
-            onClick={() => navigate('/chat')}
+            onClick={() => {
+              navigate('/chat');
+              fetchChatUsers();
+            }}
             className="relative p-2 hover:bg-pink-50 rounded-full transition-colors"
           >
             <ChatBubbleBottomCenterIcon className="h-6 w-6" />
